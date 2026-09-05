@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>King's Pot</title>
+<style>
+  :root {
+    --bg: #17130f;
+    --panel: #241d16;
+    --panel2: #30261c;
+    --ink: #f3e7cf;
+    --muted: #b8a78b;
+    --gold: #d6ad54;
+    --gold2: #f0cf78;
+    --red: #9d3b35;
+    --green: #547a58;
+    --line: #5d4a33;
+    --shadow: rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 50% 35%, #312719 0%, #1d1711 42%, #100d0a 100%);
+  }
+
+  button, input { font: inherit; }
+  button { cursor: pointer; }
+
+  .screen { min-height: 100vh; padding: 28px; }
+  .hidden { display: none !important; }
+
+  .setup-wrap {
+    max-width: 700px;
+    margin: 6vh auto 0;
+    background: linear-gradient(180deg, rgba(48,38,28,.97), rgba(31,25,19,.97));
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: 0 24px 70px var(--shadow);
+    overflow: hidden;
+  }
+
+  .setup-head {
+    padding: 30px 34px 22px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .setup-head h1 { margin: 0; font-size: clamp(2.4rem, 7vw, 4.6rem); letter-spacing: .02em; }
+  .setup-head p { margin: 8px 0 0; color: var(--muted); }
+  .setup-body { padding: 28px 34px 34px; }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  label { display: block; color: var(--muted); font-size: .88rem; letter-spacing: .08em; text-transform: uppercase; }
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    margin-top: 7px;
+    padding: 12px 13px;
+    color: var(--ink);
+    background: #17120e;
+    border: 1px solid #6a553b;
+    border-radius: 10px;
+    outline: none;
+  }
+  input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(214,173,84,.12); }
+
+  .names {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 12px;
+    margin-top: 22px;
+  }
+  .name-row label { text-transform: none; letter-spacing: 0; }
+
+  .primary, .action, .secondary, .danger {
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-weight: 700;
+    transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+  }
+  button:hover { transform: translateY(-1px); filter: brightness(1.06); }
+  button:active { transform: translateY(1px); }
+  .primary, .action { color: #1c160d; background: linear-gradient(180deg, var(--gold2), var(--gold)); border-color: #f3d995; }
+  .secondary { color: var(--ink); background: #3a2d20; border-color: #735b3e; }
+  .danger { color: #fff0eb; background: #74312d; border-color: #a34b44; }
+  .wide { width: 100%; margin-top: 24px; }
+
+  .game-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .table-panel {
+    min-height: 760px;
+    position: relative;
+    border: 1px solid #4e3d2b;
+    border-radius: 28px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at center, #274b34 0 31%, #1d3828 32% 47%, #2c2117 48% 58%, #19130e 59% 100%);
+    box-shadow: 0 22px 70px var(--shadow), inset 0 0 0 7px rgba(0,0,0,.16);
+  }
+
+  .table-title {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #c7b899;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    font-size: .78rem;
+    white-space: nowrap;
+  }
+
+  .center-pot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: radial-gradient(circle, #3b2b16, #241a10 66%, #171008 100%);
+    border: 3px double #9d7942;
+    box-shadow: inset 0 0 35px rgba(214,173,84,.13), 0 14px 30px rgba(0,0,0,.32);
+    z-index: 2;
+  }
+  .pot-label { color: var(--muted); text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; }
+  .pot-value { margin-top: 4px; font-size: 2.1rem; font-weight: 700; color: var(--gold2); }
+  .crown-display { margin-top: 13px; color: #f0dfb7; font-size: .92rem; min-height: 1.4em; }
+  .crown-number { display: inline-block; margin-left: 5px; color: var(--gold2); font-size: 1.25rem; font-weight: 700; }
+
+  .seat {
+    position: absolute;
+    width: 150px;
+    min-height: 92px;
+    transform: translate(-50%, -50%);
+    border-radius: 16px;
+    border: 1px solid #6b553a;
+    background: linear-gradient(180deg, #33271c, #221a13);
+    box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    padding: 11px 10px;
+    text-align: center;
+    transition: opacity .18s ease, transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    z-index: 3;
+  }
+  .seat .seat-num { color: #98866a; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; }
+  .seat .seat-name { margin-top: 3px; font-size: 1.08rem; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .seat .seat-status { margin-top: 5px; color: #b8aa92; font-size: .82rem; min-height: 1.1em; }
+  .seat.active-turn {
+    border-color: var(--gold2);
+    box-shadow: 0 0 0 3px rgba(240,207,120,.13), 0 12px 28px rgba(0,0,0,.38);
+  }
+  .seat.king {
+    background: linear-gradient(180deg, #4a351d, #2c2014);
+    border-color: var(--gold);
+  }
+  .royal-regalia {
+    position: absolute;
+    top: -52px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    filter: drop-shadow(0 5px 6px rgba(0,0,0,.48));
+  }
+  .royal-crown {
+    color: var(--gold2);
+    font-size: 2rem;
+    line-height: 1;
+  }
+  .royal-die {
+    width: 43px;
+    height: 43px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: #f0e4cc;
+    color: #20180f;
+    font-family: system-ui, sans-serif;
+    font-size: 2.35rem;
+    line-height: 1;
+    box-shadow: inset 0 0 0 2px #b8a98e;
+  }
+  .seat.king-arrival .royal-regalia {
+    animation: regaliaArrive .62s cubic-bezier(.18,.86,.32,1.2);
+  }
+  @keyframes regaliaArrive {
+    0% { transform: translate(-50%, -34px) scale(.45); opacity: 0; }
+    58% { transform: translate(-50%, 5px) scale(1.16); opacity: 1; }
+    100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  }
+  .seat.eliminated { opacity: .28; filter: grayscale(.65); }
+  .seat.eliminated .seat-name { text-decoration: line-through; }
+
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .card {
+    background: linear-gradient(180deg, rgba(49,39,29,.96), rgba(31,25,19,.96));
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.22);
+  }
+  .card h2, .card h3 { margin: 0 0 9px; }
+  .eyebrow { color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-size: .72rem; }
+  #turnName { font-size: 1.65rem; margin-top: 3px; }
+  #instruction { color: #d6c8ae; line-height: 1.42; min-height: 3.9em; }
+
+  .die-wrap { display: flex; align-items: center; gap: 14px; margin: 16px 0; }
+  .die {
+    width: 112px;
+    height: 112px;
+    border-radius: 20px;
+    display: grid;
+    place-items: center;
+    background: #f0e4cc;
+    color: #20180f;
+    font-family: system-ui, sans-serif;
+    font-size: 5.7rem;
+    line-height: 1;
+    box-shadow: inset 0 0 0 2px #b8a98e, 0 8px 20px rgba(0,0,0,.25);
+  }
+  .die.rolling, .mini-die.rolling {
+    animation: diceShake .16s linear infinite;
+    box-shadow: inset 0 0 0 2px #b8a98e, 0 12px 28px rgba(0,0,0,.42);
+  }
+  .die.landed, .mini-die.landed {
+    animation: diceLand .34s cubic-bezier(.2,.9,.28,1.35);
+  }
+  @keyframes diceShake {
+    0%   { transform: translate(0,0) rotate(0deg) scale(1); }
+    25%  { transform: translate(-4px,2px) rotate(-7deg) scale(1.03); }
+    50%  { transform: translate(3px,-3px) rotate(6deg) scale(.98); }
+    75%  { transform: translate(4px,3px) rotate(-4deg) scale(1.02); }
+    100% { transform: translate(0,0) rotate(0deg) scale(1); }
+  }
+  @keyframes diceLand {
+    0%   { transform: scale(.82) rotate(-8deg); }
+    58%  { transform: scale(1.16) rotate(4deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  button:disabled {
+    cursor: default;
+    opacity: .55;
+    filter: none;
+    transform: none;
+  }
+  .roll-note { color: var(--muted); font-size: .84rem; }
+  .roll-note strong { color: var(--gold2); }
+
+  .actions { display: grid; gap: 10px; }
+  .two-actions { grid-template-columns: 1fr 1fr; }
+
+  .status-banner {
+    border-left: 4px solid var(--gold);
+    color: #e8dabe;
+    line-height: 1.4;
+  }
+  .status-banner strong { color: var(--gold2); }
+
+  .duel-card { border-color: #8c6241; }
+  .duel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .duel-vs { color: var(--muted); font-size: .85rem; }
+  .duel-dice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0; }
+  .duelist { text-align: center; }
+  .duelist-name { font-weight: 700; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini-die {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: #f0e4cc;
+    color: #20180f;
+    font-family: system-ui, sans-serif;
+    font-size: 3rem;
+    box-shadow: inset 0 0 0 2px #b8a98e;
+  }
+
+  .rules-small { color: var(--muted); font-size: .82rem; line-height: 1.5; }
+  .rules-small b { color: #e8dabe; }
+
+  .winner-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(8,6,4,.86);
+    backdrop-filter: blur(4px);
+  }
+  .winner-box {
+    width: min(760px, 100%);
+    text-align: center;
+    padding: 42px 28px 34px;
+    border-radius: 24px;
+    border: 2px solid var(--gold);
+    background: radial-gradient(circle at 50% 0, #4b361d, #231910 58%, #171009 100%);
+    box-shadow: 0 30px 100px rgba(0,0,0,.58);
+  }
+  .winner-crown { font-size: 4.7rem; line-height: 1; color: var(--gold2); }
+  .winner-box h1 { margin: 8px 0 5px; font-size: clamp(2.4rem, 8vw, 4.6rem); }
+  .winner-pot { color: var(--gold2); font-size: 1.8rem; margin: 12px 0 24px; }
+  .winner-reason { color: var(--muted); margin-bottom: 18px; }
+  .fealty-results {
+    margin: 0 auto 24px;
+    max-width: 470px;
+    color: #e8dabe;
+    line-height: 1.5;
+  }
+  .fealty-results strong { color: var(--gold2); }
+  .accounting-results {
+    margin: 6px auto 24px;
+    max-width: 620px;
+    text-align: left;
+  }
+  .accounting-title {
+    text-align: center;
+    color: var(--gold2);
+    font-weight: 700;
+    margin-bottom: 9px;
+  }
+  .accounting-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: system-ui, sans-serif;
+    font-size: .88rem;
+    background: rgba(0,0,0,.16);
+    border: 1px solid rgba(214,173,84,.24);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .accounting-table th, .accounting-table td {
+    padding: 8px 9px;
+    border-bottom: 1px solid rgba(214,173,84,.14);
+  }
+  .accounting-table th {
+    color: var(--muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .accounting-table th:not(:first-child), .accounting-table td:not(:first-child) { text-align: right; }
+  .accounting-table tr:last-child td { border-bottom: 0; }
+  .net-positive { color: #a9d4ad; }
+  .net-negative { color: #e2a09a; }
+
+  .seat.eliminated.fealty { opacity: .55; }
+  .seat.eliminated.fealty .seat-status { color: var(--gold2); }
+  .seat.fealty-choice-seat {
+    cursor: pointer;
+    opacity: 1;
+    border: 2px solid var(--gold2);
+    background: radial-gradient(circle at 50% 0, #5a4120, #352719 62%, #21170f 100%);
+    box-shadow: 0 0 0 4px rgba(240,207,120,.12), 0 0 34px rgba(240,207,120,.42), 0 14px 30px rgba(0,0,0,.35);
+    animation: fealtyPulse 1.05s ease-in-out infinite alternate;
+    z-index: 6;
+  }
+  .seat.fealty-choice-seat:hover {
+    transform: translate(-50%, -50%) scale(1.08);
+    border-color: #fff0b9;
+  }
+  .seat.fealty-choice-seat .seat-status { color: var(--gold2); font-weight: 700; }
+  @keyframes fealtyPulse {
+    from { box-shadow: 0 0 0 3px rgba(240,207,120,.10), 0 0 22px rgba(240,207,120,.28), 0 14px 30px rgba(0,0,0,.35); }
+    to { box-shadow: 0 0 0 6px rgba(240,207,120,.17), 0 0 42px rgba(240,207,120,.52), 0 14px 30px rgba(0,0,0,.35); }
+  }
+
+  @media (max-width: 900px) {
+    .game-shell { grid-template-columns: 1fr; }
+    .table-panel { min-height: 680px; }
+    .side-panel { display: grid; grid-template-columns: 1fr 1fr; }
+    .side-panel > .card:first-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 650px) {
+    .screen { padding: 12px; }
+    .setup-body, .setup-head { padding-left: 20px; padding-right: 20px; }
+    .field-grid, .names, .side-panel { grid-template-columns: 1fr; }
+    .table-panel { min-height: 620px; }
+    .seat { width: 116px; min-height: 78px; padding: 8px; }
+    .seat .seat-name { font-size: .94rem; }
+    .center-pot { width: 165px; height: 165px; }
+    .pot-value { font-size: 1.65rem; }
+  }
+</style>
+</head>
+<body>
+
+<section id="setupScreen" class="screen">
+  <div class="setup-wrap">
+    <div class="setup-head">
+      <h1>King's Pot</h1>
+      <p>A clockwise game of crowns, duels, and a steadily growing pot.</p>
+    </div>
+    <div class="setup-body">
+      <div class="field-grid">
+        <label>
+          Number of Seats
+          <input id="seatCount" type="number" min="2" max="10" value="4" />
+        </label>
+        <label>
+          Minimum Bet
+          <input id="minimumBet" type="number" min="0.01" step="0.01" value="1" />
+        </label>
+      </div>
+      <button id="makeSeatsBtn" class="secondary wide">Set Seats</button>
+      <div id="nameFields" class="names"></div>
+      <button id="startBtn" class="primary wide hidden">Start Game</button>
+    </div>
+  </div>
+</section>
+
+<section id="gameScreen" class="screen hidden">
+  <div class="game-shell">
+    <div id="tablePanel" class="table-panel">
+      <div class="table-title">Clockwise Play</div>
+      <div id="centerPot" class="center-pot">
+        <div class="pot-label">The Pot</div>
+        <div id="potValue" class="pot-value">$0</div>
+        <div id="crownDisplay" class="crown-display">No King Yet</div>
+      </div>
+      <div id="seatsLayer"></div>
+    </div>
+
+    <aside class="side-panel">
+      <div class="card">
+        <div class="eyebrow">Current Turn</div>
+        <div id="turnName">—</div>
+        <div id="instruction">Roll to begin.</div>
+        <div class="die-wrap">
+          <div id="mainDie" class="die">?</div>
+          <div class="roll-note">Every roll costs <strong id="betDisplay">$1</strong> before the die is cast.</div>
+        </div>
+        <div id="normalActions" class="actions">
+          <button id="rollBtn" class="action">Pay & Roll</button>
+        </div>
+        <div id="kingActions" class="actions two-actions hidden">
+          <button id="passBtn" class="secondary">Pass</button>
+          <button id="claimBtn" class="action">Pay & Roll to Claim</button>
+        </div>
+      </div>
+
+      <div id="duelCard" class="card duel-card hidden">
+        <div class="duel-head">
+          <h3>Duel</h3>
+          <span class="duel-vs">Both rolls are paid</span>
+        </div>
+        <div class="duel-dice">
+          <div class="duelist">
+            <div id="duelKingName" class="duelist-name">King</div>
+            <div id="duelKingDie" class="mini-die">?</div>
+          </div>
+          <div class="duelist">
+            <div id="duelChallengerName" class="duelist-name">Challenger</div>
+            <div id="duelChallengerDie" class="mini-die">?</div>
+          </div>
+        </div>
+        <button id="duelRollBtn" class="action wide" style="margin-top:0">Pay Both & Roll Duel</button>
+      </div>
+
+      <div id="statusCard" class="card status-banner">
+        <strong>Ready.</strong> The first player to establish a crown becomes King.
+      </div>
+
+      <div class="card rules-small">
+        <b>Normal roll:</b> 1 = out, 3 = pay and reroll, 2/4/5/6 can take the throne. Higher beats the crown, ties cause a duel, and 2 beats a crown of 6.<br><br>
+        <b>King's turn:</b> pass, or pay to try to match the crown. A 1 eliminates the King and a 3 forces another paid roll.<br><br>
+        <b>Fealty:</b> when elimination leaves 2 or more players standing, the eliminated player clicks one surviving player on the wheel to swear fealty. If that player wins, the eliminated player is paid a number of minimum bets equal to how many choices they had. If only one player remains, Fealty is skipped.
+      </div>
+    </aside>
+  </div>
+</section>
+
+<div id="winnerOverlay" class="winner-overlay hidden">
+  <div class="winner-box">
+    <div class="winner-crown">♛</div>
+    <div class="eyebrow">Winner</div>
+    <h1 id="winnerName">Player</h1>
+    <div id="winnerPot" class="winner-pot">$0</div>
+    <div id="winnerReason" class="winner-reason"></div>
+    <div id="fealtyResults" class="fealty-results hidden"></div>
+    <div id="accountingResults" class="accounting-results"></div>
+    <button id="newGameBtn" class="primary">New Game</button>
+  </div>
+</div>
+
+
+<script>
+(() => {
+  const diceChars = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+  const $ = id => document.getElementById(id);
+
+  const setupScreen = $('setupScreen');
+  const gameScreen = $('gameScreen');
+  const seatCountInput = $('seatCount');
+  const minimumBetInput = $('minimumBet');
+  const makeSeatsBtn = $('makeSeatsBtn');
+  const nameFields = $('nameFields');
+  const startBtn = $('startBtn');
+
+  const tablePanel = $('tablePanel');
+  const seatsLayer = $('seatsLayer');
+  const potValue = $('potValue');
+  const crownDisplay = $('crownDisplay');
+  const turnName = $('turnName');
+  const instruction = $('instruction');
+  const mainDie = $('mainDie');
+  const betDisplay = $('betDisplay');
+  const normalActions = $('normalActions');
+  const kingActions = $('kingActions');
+  const rollBtn = $('rollBtn');
+  const passBtn = $('passBtn');
+  const claimBtn = $('claimBtn');
+  const duelCard = $('duelCard');
+  const duelKingName = $('duelKingName');
+  const duelChallengerName = $('duelChallengerName');
+  const duelKingDie = $('duelKingDie');
+  const duelChallengerDie = $('duelChallengerDie');
+  const duelRollBtn = $('duelRollBtn');
+  const statusCard = $('statusCard');
+
+  const winnerOverlay = $('winnerOverlay');
+  const winnerName = $('winnerName');
+  const winnerPot = $('winnerPot');
+  const winnerReason = $('winnerReason');
+  const fealtyResults = $('fealtyResults');
+  const accountingResults = $('accountingResults');
+  const newGameBtn = $('newGameBtn');
+
+
+  let players = [];
+  let minBet = 1;
+  let pot = 0;
+  let kingIndex = null;
+  let crown = null;
+  let currentIndex = 0;
+  let mode = 'normal'; // normal | claim | duel | fealty | ended
+  let duel = null; // { king, challenger }
+  let pendingFealty = null; // { playerIndex, eligible, choiceCount, payout, priorMode, resolve }
+  let rollingLock = false;
+  let kingArrivalIndex = null;
+
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  function setActionButtonsDisabled(disabled) {
+    [rollBtn, passBtn, claimBtn, duelRollBtn].forEach(btn => btn.disabled = disabled);
+  }
+
+  async function animateDie(element, finalRoll, duration = 1250) {
+    element.classList.remove('landed');
+    element.classList.add('rolling');
+    const start = performance.now();
+    let delay = 55;
+
+    while (performance.now() - start < duration) {
+      element.textContent = diceChars[rollD6()];
+      await sleep(delay);
+      const progress = Math.min(1, (performance.now() - start) / duration);
+      delay = 55 + Math.floor(progress * 95);
+    }
+
+    element.classList.remove('rolling');
+    element.textContent = diceChars[finalRoll];
+    void element.offsetWidth;
+    element.classList.add('landed');
+    await sleep(430);
+    element.classList.remove('landed');
+  }
+
+  async function animateDuelDice(kingRoll, challengerRoll) {
+    await Promise.all([
+      animateDie(duelKingDie, kingRoll, 1450),
+      animateDie(duelChallengerDie, challengerRoll, 1450)
+    ]);
+  }
+
+  function money(n) {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: n % 1 ? 2 : 0 }).format(n);
+  }
+
+  function rollD6() {
+    return Math.floor(Math.random() * 6) + 1;
+  }
+
+  function aliveIndices() {
+    return players.map((p, i) => p.alive ? i : null).filter(i => i !== null);
+  }
+
+  function nextAliveAfter(index) {
+    if (!players.length) return null;
+    for (let step = 1; step <= players.length; step++) {
+      const i = (index + step) % players.length;
+      if (players[i].alive) return i;
+    }
+    return null;
+  }
+
+  function chargeRolls(...payerIndices) {
+    payerIndices.forEach(index => {
+      if (players[index]) players[index].paidIn += minBet;
+      pot += minBet;
+    });
+    updatePot();
+  }
+
+  function updatePot() {
+    potValue.textContent = money(pot);
+  }
+
+  function setStatus(html) {
+    statusCard.innerHTML = html;
+  }
+
+  function buildNameFields() {
+    let count = Math.max(2, Math.min(10, parseInt(seatCountInput.value, 10) || 2));
+    seatCountInput.value = count;
+    nameFields.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const wrap = document.createElement('div');
+      wrap.className = 'name-row';
+      wrap.innerHTML = `<label>Seat ${i + 1}<input type="text" maxlength="20" value="Player ${i + 1}" data-seat-name="${i}"></label>`;
+      nameFields.appendChild(wrap);
+    }
+    startBtn.classList.remove('hidden');
+  }
+
+  function beginGame() {
+    const bet = Number(minimumBetInput.value);
+    if (!Number.isFinite(bet) || bet <= 0) {
+      minimumBetInput.focus();
+      return;
+    }
+    minBet = Math.round(bet * 100) / 100;
+    const inputs = [...nameFields.querySelectorAll('[data-seat-name]')];
+    if (!inputs.length) buildNameFields();
+
+    players = [...nameFields.querySelectorAll('[data-seat-name]')].map((input, i) => ({
+      name: input.value.trim() || `Player ${i + 1}`,
+      alive: true,
+      paidIn: 0,
+      winnings: 0,
+      fealtyTarget: null,
+      fealtyChoices: 0,
+      fealtyPayout: 0
+    }));
+
+    pot = 0;
+    kingIndex = null;
+    crown = null;
+    currentIndex = 0;
+    mode = 'normal';
+    duel = null;
+    pendingFealty = null;
+    rollingLock = false;
+    kingArrivalIndex = null;
+    setActionButtonsDisabled(false);
+    mainDie.textContent = '?';
+    duelKingDie.textContent = '?';
+    duelChallengerDie.textContent = '?';
+    winnerOverlay.classList.add('hidden');
+    fealtyResults.classList.add('hidden');
+    fealtyResults.innerHTML = '';
+    accountingResults.innerHTML = '';
+    betDisplay.textContent = money(minBet);
+    updatePot();
+
+    setupScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    setStatus(`<strong>${players[0].name}</strong> opens the game. Pay ${money(minBet)} and roll to establish the first King.`);
+    render();
+  }
+
+  function renderSeats() {
+    seatsLayer.innerHTML = '';
+    const rect = tablePanel.getBoundingClientRect();
+    const compact = rect.width < 650;
+    const rx = rect.width * (compact ? .37 : .40);
+    const ry = rect.height * (compact ? .35 : .38);
+    const cx = rect.width / 2;
+    const cy = rect.height / 2 + 6;
+
+    players.forEach((p, i) => {
+      const angle = -Math.PI / 2 + i * (Math.PI * 2 / players.length);
+      const x = cx + Math.cos(angle) * rx;
+      const y = cy + Math.sin(angle) * ry;
+      const seat = document.createElement('div');
+      seat.className = 'seat';
+      const isFealtyChoice = mode === 'fealty' && pendingFealty && pendingFealty.eligible.includes(i);
+      if (!p.alive) seat.classList.add('eliminated');
+      if (!p.alive && p.fealtyTarget !== null) seat.classList.add('fealty');
+      if (i === kingIndex && p.alive) seat.classList.add('king');
+      if (i === kingArrivalIndex && p.alive) seat.classList.add('king-arrival');
+      if (i === currentIndex && p.alive && mode !== 'duel' && mode !== 'ended' && mode !== 'fealty') seat.classList.add('active-turn');
+      if (mode === 'duel' && duel && p.alive && (i === duel.king || i === duel.challenger)) seat.classList.add('active-turn');
+      if (isFealtyChoice) seat.classList.add('fealty-choice-seat');
+      seat.style.left = `${x}px`;
+      seat.style.top = `${y}px`;
+      let status = !p.alive ? 'Eliminated' : '';
+      if (!p.alive && p.fealtyTarget !== null) status = `Fealty → ${players[p.fealtyTarget].name} · ${p.fealtyChoices}×`;
+      if (p.alive && i === kingIndex) status = `King · Crown ${crown}`;
+      if (isFealtyChoice) status = `${status ? status + ' · ' : ''}Pledge here · ${pendingFealty.choiceCount}×`;
+      const regalia = (p.alive && i === kingIndex && crown != null)
+        ? `<div class="royal-regalia"><span class="royal-crown">♛</span><span class="royal-die">${diceChars[crown]}</span></div>`
+        : '';
+      seat.innerHTML = `${regalia}<div class="seat-num">Seat ${i + 1}</div><div class="seat-name">${escapeHtml(p.name)}</div><div class="seat-status">${status}</div>`;
+      if (isFealtyChoice) {
+        seat.setAttribute('role', 'button');
+        seat.setAttribute('tabindex', '0');
+        seat.setAttribute('aria-label', `Swear fealty to ${p.name}`);
+        seat.addEventListener('click', () => chooseFealtyTarget(i));
+        seat.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            chooseFealtyTarget(i);
+          }
+        });
+      }
+      seatsLayer.appendChild(seat);
+    });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  }
+
+  function renderCenter() {
+    if (kingIndex === null || !players[kingIndex]?.alive) {
+      crownDisplay.innerHTML = 'No King Yet';
+    } else {
+      crownDisplay.innerHTML = `${escapeHtml(players[kingIndex].name)} is King <span class="crown-number">${crown}</span>`;
+    }
+  }
+
+  function renderControls() {
+    duelCard.classList.toggle('hidden', mode !== 'duel');
+    normalActions.classList.add('hidden');
+    kingActions.classList.add('hidden');
+
+    if (mode === 'ended' || mode === 'fealty') {
+      if (mode === 'fealty' && pendingFealty) {
+        const p = players[pendingFealty.playerIndex];
+        turnName.textContent = `${p.name} · Fealty`;
+        instruction.textContent = `Click one of the ${pendingFealty.choiceCount} highlighted survivors. If that player wins, ${p.name} receives ${money(pendingFealty.payout)}.`;
+      }
+      return;
+    }
+    if (mode === 'duel') {
+      turnName.textContent = 'Duel in Progress';
+      instruction.textContent = 'Both duelists pay before each roll. Ties reroll until the duel is decided.';
+      duelKingName.textContent = players[duel.king].name;
+      duelChallengerName.textContent = players[duel.challenger].name;
+      return;
+    }
+
+    const p = players[currentIndex];
+    turnName.textContent = p?.name || '—';
+
+    if (kingIndex !== null && currentIndex === kingIndex) {
+      kingActions.classList.remove('hidden');
+      instruction.textContent = `Your crown is ${crown}. Pass and let the pot grow, or pay ${money(minBet)} and try to match your crown.`;
+    } else {
+      normalActions.classList.remove('hidden');
+      if (kingIndex === null) {
+        instruction.textContent = `Pay ${money(minBet)} and roll. A 2, 4, 5, or 6 establishes the throne.`;
+      } else {
+        instruction.textContent = `Pay ${money(minBet)} and roll against Crown ${crown}.`;
+      }
+    }
+  }
+
+  function render() {
+    updatePot();
+    renderCenter();
+    renderSeats();
+    renderControls();
+  }
+
+  function eliminate(index, reasonText) {
+    if (!players[index] || !players[index].alive) return;
+    players[index].alive = false;
+    if (index === kingIndex) {
+      kingIndex = null;
+      crown = null;
+      kingArrivalIndex = null;
+    }
+    setStatus(`<strong>${players[index].name} is out.</strong> ${reasonText || ''}`);
+  }
+
+  function offerFealty(index) {
+    const eligible = aliveIndices();
+    if (!players[index] || players[index].alive || eligible.length < 2) return Promise.resolve(null);
+
+    const choiceCount = eligible.length;
+    const payout = minBet * choiceCount;
+    const priorMode = mode;
+    mode = 'fealty';
+    setActionButtonsDisabled(true);
+
+    return new Promise(resolve => {
+      pendingFealty = { playerIndex: index, eligible, choiceCount, payout, priorMode, resolve };
+      setStatus(`<strong>${players[index].name} must swear Fealty.</strong> Click one of the ${choiceCount} highlighted surviving players. A winning pledge pays ${money(payout)}.`);
+      render();
+    });
+  }
+
+  function chooseFealtyTarget(targetIndex) {
+    const pending = pendingFealty;
+    if (!pending || mode !== 'fealty' || !pending.eligible.includes(targetIndex)) return;
+
+    const pledgedPlayer = players[pending.playerIndex];
+    pledgedPlayer.fealtyTarget = targetIndex;
+    pledgedPlayer.fealtyChoices = pending.choiceCount;
+    pledgedPlayer.fealtyPayout = pending.payout;
+
+    pendingFealty = null;
+    mode = pending.priorMode === 'ended' ? 'ended' : 'normal';
+    setActionButtonsDisabled(false);
+    setStatus(`<strong>${pledgedPlayer.name} swears fealty to ${players[targetIndex].name}.</strong> If ${players[targetIndex].name} wins, ${pledgedPlayer.name} receives ${money(pending.payout)}.`);
+    render();
+    pending.resolve(targetIndex);
+  }
+
+  function renderAccounting() {
+    const rows = players.map(p => {
+      const net = p.winnings - p.paidIn;
+      const cls = net > 0 ? 'net-positive' : net < 0 ? 'net-negative' : '';
+      const sign = net > 0 ? '+' : '';
+      return `<tr><td>${escapeHtml(p.name)}</td><td>${money(p.paidIn)}</td><td>${money(p.winnings)}</td><td class="${cls}">${sign}${money(net)}</td></tr>`;
+    }).join('');
+    accountingResults.innerHTML = `<div class="accounting-title">Final Accounting</div><table class="accounting-table"><thead><tr><th>Player</th><th>Paid In</th><th>Winnings</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function setKing(index, newCrown) {
+    const changedHands = kingIndex !== index;
+    kingIndex = index;
+    crown = newCrown;
+    if (changedHands) {
+      kingArrivalIndex = index;
+      setTimeout(() => {
+        if (kingArrivalIndex === index) {
+          kingArrivalIndex = null;
+          if (!gameScreen.classList.contains('hidden')) renderSeats();
+        }
+      }, 760);
+    }
+  }
+
+  function clearKing() {
+    kingIndex = null;
+    crown = null;
+    kingArrivalIndex = null;
+  }
+
+  function checkEnd(reason = 'Last player standing') {
+    const alive = aliveIndices();
+    if (alive.length === 1) {
+      endGame(alive[0], reason);
+      return true;
+    }
+    if (alive.length === 0) {
+      mode = 'ended';
+      winnerName.textContent = 'No One';
+      winnerPot.textContent = `${money(pot)} remains unclaimed`;
+      winnerReason.textContent = 'Every remaining player was eliminated at once.';
+      fealtyResults.classList.add('hidden');
+      fealtyResults.innerHTML = '';
+      renderAccounting();
+      winnerOverlay.classList.remove('hidden');
+      render();
+      return true;
+    }
+    return false;
+  }
+
+  function endGame(index, reason) {
+    mode = 'ended';
+    players[index].winnings += pot;
+    winnerName.textContent = players[index].name;
+    winnerPot.textContent = `Wins ${money(pot)}`;
+    winnerReason.textContent = reason;
+
+    const rewarded = players
+      .map((p, i) => ({ ...p, index: i }))
+      .filter(p => p.fealtyTarget === index && p.fealtyPayout > 0);
+    rewarded.forEach(p => { players[p.index].winnings += p.fealtyPayout; });
+    if (rewarded.length) {
+      fealtyResults.innerHTML = `<strong>Fealty rewarded</strong><br>${rewarded.map(p => `${escapeHtml(p.name)} receives ${money(p.fealtyPayout)} for backing ${escapeHtml(players[index].name)}.`).join('<br>')}`;
+      fealtyResults.classList.remove('hidden');
+    } else {
+      fealtyResults.innerHTML = '';
+      fealtyResults.classList.add('hidden');
+    }
+
+    renderAccounting();
+    winnerOverlay.classList.remove('hidden');
+    const fealtySummary = rewarded.length ? ` ${rewarded.map(p => `${p.name} receives ${money(p.fealtyPayout)} in Fealty`).join('; ')}.` : '';
+    setStatus(`<strong>${players[index].name} wins ${money(pot)}.</strong> ${reason}.${fealtySummary}`);
+    render();
+  }
+
+  function advanceFrom(index) {
+    const next = nextAliveAfter(index);
+    if (next === null) return;
+    currentIndex = next;
+    mainDie.textContent = '?';
+    render();
+  }
+
+  function takeThrone(index, newCrown, message) {
+    setKing(index, newCrown);
+    setStatus(`<strong>${players[index].name} takes the throne with Crown ${newCrown}.</strong> ${message || ''}`);
+  }
+
+  async function normalRoll() {
+    if (rollingLock || mode === 'duel' || mode === 'ended') return;
+    if (!players[currentIndex]?.alive) return;
+
+    // If current player is the King, this button should not be visible.
+    if (currentIndex === kingIndex) return;
+
+    rollingLock = true;
+    setActionButtonsDisabled(true);
+    const roller = currentIndex;
+    chargeRolls(roller);
+    const r = rollD6();
+    setStatus(`<strong>${players[roller].name} pays ${money(minBet)}.</strong> The die is rolling...`);
+    await animateDie(mainDie, r);
+    rollingLock = false;
+    setActionButtonsDisabled(false);
+
+    if (r === 1) {
+      eliminate(roller, `Their ${money(minBet)} roll came up 1.`);
+      await offerFealty(roller);
+      if (checkEnd()) return;
+      advanceFrom(roller);
+      return;
+    }
+
+    if (r === 3) {
+      setStatus(`<strong>${players[roller].name} rolled 3.</strong> They must pay and roll again.`);
+      render();
+      return;
+    }
+
+    if (kingIndex === null) {
+      takeThrone(roller, r, 'The first crown has been established.');
+      advanceFrom(roller);
+      return;
+    }
+
+    const oldKing = kingIndex;
+    const oldCrown = crown;
+    const specialTwoBeatsSix = (oldCrown === 6 && r === 2);
+
+    if (specialTwoBeatsSix || r > oldCrown) {
+      takeThrone(roller, r, specialTwoBeatsSix ? 'A 2 topples a Crown of 6.' : `${r} beats ${oldCrown}.`);
+      advanceFrom(roller);
+      return;
+    }
+
+    if (r === oldCrown) {
+      startDuel(oldKing, roller);
+      return;
+    }
+
+    setStatus(`<strong>${players[roller].name} rolled ${r}.</strong> Crown ${oldCrown} holds.`);
+    advanceFrom(roller);
+  }
+
+  function kingPass() {
+    if (rollingLock || mode === 'duel' || mode === 'ended' || currentIndex !== kingIndex) return;
+    const k = kingIndex;
+    setStatus(`<strong>${players[k].name} passes.</strong> The throne holds and the next circuit begins.`);
+    advanceFrom(k);
+  }
+
+  async function kingClaim() {
+    if (rollingLock || mode === 'duel' || mode === 'ended' || currentIndex !== kingIndex) return;
+    mode = 'claim';
+    rollingLock = true;
+    setActionButtonsDisabled(true);
+    const k = kingIndex;
+    chargeRolls(k);
+    const r = rollD6();
+    setStatus(`<strong>${players[k].name} pays ${money(minBet)} to claim.</strong> The die is rolling...`);
+    await animateDie(mainDie, r, 1500);
+    rollingLock = false;
+    setActionButtonsDisabled(false);
+
+    if (r === 1) {
+      eliminate(k, `The King tried to claim the pot and rolled 1.`);
+      mode = 'normal';
+      await offerFealty(k);
+      if (checkEnd()) return;
+      advanceFrom(k);
+      return;
+    }
+
+    if (r === 3) {
+      setStatus(`<strong>${players[k].name} rolled 3 while claiming.</strong> The King must pay and roll again.`);
+      mode = 'normal';
+      render();
+      return;
+    }
+
+    if (r === crown) {
+      endGame(k, `Matched Crown ${crown} and claimed the pot`);
+      return;
+    }
+
+    setStatus(`<strong>${players[k].name} rolled ${r} and missed Crown ${crown}.</strong> They remain King and play continues.`);
+    mode = 'normal';
+    advanceFrom(k);
+  }
+
+  function startDuel(king, challenger) {
+    mode = 'duel';
+    duel = { king, challenger };
+    duelKingDie.textContent = '?';
+    duelChallengerDie.textContent = '?';
+    setStatus(`<strong>Duel!</strong> ${players[challenger].name} tied Crown ${crown}. Both players now pay and roll until the throne is decided.`);
+    render();
+  }
+
+  async function duelRoll() {
+    if (rollingLock || mode !== 'duel' || !duel) return;
+    const k = duel.king;
+    const c = duel.challenger;
+    if (!players[k].alive || !players[c].alive) return;
+
+    rollingLock = true;
+    setActionButtonsDisabled(true);
+    chargeRolls(k, c);
+    const kr = rollD6();
+    const cr = rollD6();
+    setStatus(`<strong>${players[k].name} and ${players[c].name} each pay ${money(minBet)}.</strong> The duel dice are rolling...`);
+    await animateDuelDice(kr, cr);
+    rollingLock = false;
+    setActionButtonsDisabled(false);
+
+    if (kr === 1 || cr === 1) {
+      if (kr === 1) players[k].alive = false;
+      if (cr === 1) players[c].alive = false;
+
+      if (kr === 1 && cr === 1) {
+        clearKing();
+        setStatus(`<strong>Double elimination!</strong> Both ${players[k].name} and ${players[c].name} rolled 1 and are out.`);
+      } else if (kr === 1) {
+        setKing(c, cr);
+        setStatus(`<strong>${players[k].name} is out.</strong> ${players[c].name} survives the duel and takes the throne with Crown ${cr}.`);
+      } else {
+        setKing(k, kr);
+        setStatus(`<strong>${players[c].name} is out.</strong> ${players[k].name} survives the duel and keeps the throne with Crown ${kr}.`);
+      }
+
+      mode = 'normal';
+      const challengerSeat = c;
+      duel = null;
+      if (kr === 1) await offerFealty(k);
+      if (cr === 1) await offerFealty(c);
+      if (checkEnd()) return;
+      advanceFrom(challengerSeat);
+      return;
+    }
+
+    if (kr === cr) {
+      setStatus(`<strong>Duel tied at ${kr}.</strong> Both players must pay and roll again.`);
+      render();
+      return;
+    }
+
+    if (kr > cr) {
+      setKing(k, kr);
+      setStatus(`<strong>${players[k].name} wins the duel ${kr}–${cr}.</strong> The King keeps the throne with Crown ${kr}.`);
+    } else {
+      setKing(c, cr);
+      setStatus(`<strong>${players[c].name} wins the duel ${cr}–${kr}.</strong> They seize the throne with Crown ${cr}.`);
+    }
+
+    mode = 'normal';
+    const challengerSeat = c;
+    duel = null;
+    advanceFrom(challengerSeat);
+  }
+
+  makeSeatsBtn.addEventListener('click', buildNameFields);
+  startBtn.addEventListener('click', beginGame);
+  rollBtn.addEventListener('click', normalRoll);
+  passBtn.addEventListener('click', kingPass);
+  claimBtn.addEventListener('click', kingClaim);
+  duelRollBtn.addEventListener('click', duelRoll);
+  newGameBtn.addEventListener('click', () => {
+    winnerOverlay.classList.add('hidden');
+    pendingFealty = null;
+    fealtyResults.classList.add('hidden');
+    fealtyResults.innerHTML = '';
+    accountingResults.innerHTML = '';
+    gameScreen.classList.add('hidden');
+    setupScreen.classList.remove('hidden');
+    buildNameFields();
+  });
+
+  window.addEventListener('resize', () => {
+    if (!gameScreen.classList.contains('hidden')) renderSeats();
+  });
+
+  buildNameFields();
+})();
+</script>
+</body>
+</html>
